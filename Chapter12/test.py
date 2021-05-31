@@ -213,19 +213,19 @@ def put_event_boss(): # 床にイベントを配置する
     global pl_x, pl_y, pl_d, pl_a
     # 階段の配置
     while True:
-        x = random.randint(3, DUNGEON_W-4)
-        y = random.randint(3, DUNGEON_H-4)
+        x = 17
+        y = 14
         if(dungeon[y][x] == 0):
-            for ry in range(-1, 2): # 階段の周囲を床にする
-                for rx in range(-1, 2):
+            for ry in range(-13, 12): # 階段の周囲を床にする
+                for rx in range(-16, 15):
                     dungeon[y+ry][x+rx] = 4
             dungeon[y][x] = 5
             break
     # プレイヤーの初期位置
     while True:
-        pl_x = random.randint(3, DUNGEON_W-4)
-        pl_y = random.randint(3, DUNGEON_H-4)
-        if(dungeon[pl_y][pl_x] == 0):
+        pl_x = 17
+        pl_y = 17
+        if(dungeon[pl_y][pl_x] == 4):
             break
     pl_d = 1
     pl_a = 2
