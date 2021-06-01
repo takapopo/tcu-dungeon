@@ -6,9 +6,11 @@ import random
 from random import shuffle
 import glob
 from pygame.locals import *
+from time import sleep
 print(os.getcwd())
 # 色の定義
 WHITE = (255, 255, 255)
+WHITE2 = (55, 155, 155)
 BLACK = (  0,   0,   0)
 RED   = (255,   0,   0)
 CYAN  = (  0, 255, 255)
@@ -21,6 +23,8 @@ imgWall2 = pygame.image.load("image/wall2.png")
 imgDark = pygame.image.load("image/dark.png")
 imgPara = pygame.image.load("image/parameter.png")
 imgBtlBG = pygame.image.load("image/btlbg.png")
+imgBtlBG2 = pygame.image.load("image/btlbg2.png")
+imgBtlBG3 = pygame.image.load("image/btlbg3.png")
 imgEnemy = pygame.image.load("image/enemy0.png")
 imgBossEnemy = pygame.image.load("image/kingenemy0.png")
 imgItem = [
@@ -70,7 +74,7 @@ pl_lifemax = 0
 pl_life = 0
 pl_str = 0
 food = 0
-potion = 0
+Heal = 0
 blazegem = 0
 treasure = 0
 
@@ -95,8 +99,11 @@ count0=0
 count1=0
 expToNextLv = round(((currentLv + count0) * (currentLv + count0) * 9) / 2) #次のレベルになるための必要経験値を設定
 
-COMMAND = ["[A]ttack", "[P]otion", "[B]laze gem", "[R]un"]
-TRE_NAME = ["Potion", "Blaze gem", "Food spoiled.", "Food +20", "Food +100"]
+boss_count=0
+boss_count2=0
+
+COMMAND = ["Attack", "Heal", "Spell", "Escape"]
+TRE_NAME = ["Heal", "Spell", "Food spoiled.", "Food +20", "Food +100"]
 EMY_NAME = [
     "Green slime", "Red slime", "Axe beast", "Ogre", "Sword man",
     "Death hornet", "Signal slime", "Devil plant", "Twin killer", "Hell","A","B"
@@ -231,25 +238,23 @@ def put_event_boss(): # 床にイベントを配置する
     pl_a = 2
 
 def make_dungeon_boss():#ボスダンジョン生成
-    print('ボス')
     dungeon.clear()
     for i in range(DUNGEON_H):
         if i==0 or i==DUNGEON_H-1:
             dungeon.insert(0,[9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9])
         else:
             dungeon.insert(0,[9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9])
-    print(dungeon)
     
 
                 
 def move_player(key): # 主人公の移動
-    global idx, tmr, pl_x, pl_y, pl_d, pl_a, pl_life, food, potion, blazegem, treasure
+    global idx, tmr, pl_x, pl_y, pl_d, pl_a, pl_life, food, Heal, blazegem, treasure
 
     if dungeon[pl_y][pl_x] == 1: # 宝箱に載った
         dungeon[pl_y][pl_x] = 0
         treasure = random.choice([0,0,0,1,1,1,1,1,1,2])
         if treasure == 0:
-            potion = potion + 1
+            Heal = Heal + 1
         if treasure == 1:
             blazegem = blazegem + 1
         if treasure == 2:
@@ -332,7 +337,7 @@ def draw_para(bg, fnt): # 主人公の能力を表示
     col = WHITE
     if food == 0 and tmr%2 == 0: col = RED
     draw_text(bg, str(food), X+128, Y+60, fnt, col)
-    draw_text(bg, str(potion), X+266, Y+6, fnt, WHITE)
+    draw_text(bg, str(Heal), X+266, Y+6, fnt, WHITE)
     draw_text(bg, str(blazegem), X+266, Y+33, fnt, WHITE)
 
 def init_battle(): # 戦闘に入る準備をする
@@ -368,17 +373,14 @@ def init_battle(): # 戦闘に入る準備をする
 
 def init_boss_battle() : #ボス戦の準備
     global imgBossEnemy, boss_emy_name, emy_lifemax, emy_life, emy_str, emy_x, emy_y
-    print('A')
     lev=floor+5
     typ=0
     imgBossEnemy = pygame.image.load("image/kingenemy"+str(0)+".png")
     boss_emy_name = BOSS_EMY_NAME[typ] + " LV????" 
 
-    emy_lifemax =100#math.floor(((60*(typ+10) + (lev-1)*10))*random.uniform(1.0,1.25))
-    print(emy_lifemax)
+    emy_lifemax =math.floor(((60*(typ+10) + (lev-1)*10))*random.uniform(1.0,1.25))-300
     emy_life = emy_lifemax
     emy_str = math.floor((int(emy_lifemax/8))*random.uniform(1.0,1.1)/2)
-    print(emy_str)
     emy_x = 440-imgBossEnemy.get_width()/2
     emy_y = 730-imgBossEnemy.get_height()   
 
@@ -396,13 +398,19 @@ def draw_battle(bg, fnt): # 戦闘画面の描画
         dmg_eff = dmg_eff - 1
         bx = random.randint(-20, 20)
         by = random.randint(-10, 10)
-    bg.blit(imgBtlBG, [bx, by])
+    if floor!=2:
+        bg.blit(imgBtlBG, [bx, by])
+    else:
+        if boss_count==1:
+            bg.blit(imgBtlBG2, [bx, by]) #ずっと出る方
+        else:
+            bg.blit(imgBtlBG3, [bx, by])
     if emy_life > 0 and emy_blink%2 == 0:
-        if floor==1 :#ボス戦時注意
+        if floor==2 :#ボス戦時注意
             bg.blit(imgBossEnemy, [emy_x, emy_y+emy_step]) 
         else:
             bg.blit(imgEnemy, [emy_x, emy_y+emy_step])
-    draw_bar(bg, 340, 580, 200, 10, emy_life, emy_lifemax)
+            draw_bar(bg, 340, 580, 200, 10, emy_life, emy_lifemax)
     if emy_blink > 0:
         emy_blink = emy_blink - 1
     for i in range(10): # 戦闘メッセージの表示
@@ -456,11 +464,8 @@ def calculateLv ():
     global currentLv,preLv,exp,count0,count1,expToNextLv
     count1=0
     expGain = random.randrange(math.floor((emy_lifemax/20)*1.5),math.floor(emy_lifemax/10)) 
-    print(str(expGain)+'得た経験値')
     exp = exp + expGain
-    print(str(exp)+'現在の経験値')
     expToNextLv = round(((preLv + count0) * (preLv + count0) * 9) / 2) #次のレベルになるための必要経験値を設定
-    print(str(expToNextLv)+'必要な経験値before')
     
     while exp>=expToNextLv :
         count1+=1
@@ -469,19 +474,17 @@ def calculateLv ():
     count0=count1
     currentLv +=(count1)
     
-    print(str(expToNextLv)+'必要な経験値after')
-    print(str(count1)+'上ったレベル')
 
 def main(): # メイン処理
-    global speed, idx, tmr, floor, fl_max, welcome
-    global pl_a, pl_lifemax, pl_life, pl_str, food, potion, blazegem
+    global speed, idx, tmr, floor, fl_max, welcome,boss_count,boss_count2
+    global pl_a, pl_lifemax, pl_life, pl_str, food, Heal, blazegem
     global emy_life, emy_step, emy_blink, dmg_eff
     dmg = 0
     lif_p = 0
     str_p = 0
 
     pygame.init()
-    pygame.display.set_caption("One hour Dungeon")
+    pygame.display.set_caption("TCU Dungeon")
     screen = pygame.display.set_mode((880, 720))
     clock = pygame.time.Clock()
     font = pygame.font.Font(None, 40)
@@ -527,15 +530,15 @@ def main(): # メイン処理
             draw_text(screen, "Press space key", 320, 560, font, BLINK[tmr%6])
             if key[K_SPACE] == 1:
                 se[5].play()
-                make_dungeon_boss()
-                put_event_boss()                
+                make_dungeon()
+                put_event()                
                 floor = 1
                 welcome = 15
                 pl_lifemax = 300
                 pl_life = pl_lifemax
                 pl_str = 100
                 food = 300
-                potion = 0
+                Heal = 0
                 blazegem = 0
                 idx = 1
                 pygame.mixer.music.load("sound/maze1.ogg")
@@ -544,10 +547,10 @@ def main(): # メイン処理
         elif idx == 1: # プレイヤーの移動
             move_player(key)
             draw_dungeon(screen, fontS)
-            draw_text(screen, "floor {} ({},{})".format(floor, pl_x, pl_y), 60, 40, fontS, WHITE)
+            draw_text(screen, "Floor {} ({},{})".format(floor, pl_x, pl_y), 25,570, fontS, WHITE)
             if welcome > 0:
                 welcome = welcome - 1
-                draw_text(screen, "Welcome to floor {}.".format(floor), 300, 180, font, CYAN)
+                draw_text(screen, "Welcome to Floor {}.".format(floor), 300, 400, font, BLACK)
 
         elif idx == 2: # 画面切り替え
             draw_dungeon(screen, fontS)
@@ -560,7 +563,7 @@ def main(): # メイン処理
                 if floor > fl_max:
                     fl_max = floor
                 welcome = 15
-                if floor ==3 :#2
+                if floor ==2 :#2
                     make_dungeon_boss()
                     put_event_boss()
                 else:
@@ -596,22 +599,32 @@ def main(): # メイン処理
 
         elif idx == 10: # 戦闘開始
             if tmr == 1:
-                x=glob.glob("sound//battle*.ogg")
-                shuffle(x)
-                pygame.mixer.music.load(x[1])
-                pygame.mixer.music.set_volume(0.03)
-                pygame.mixer.music.play(-1)
-                #init_battle()
-                init_boss_battle()
+                if floor!=2 :
+                    x=glob.glob("sound//battle*.ogg")
+                    shuffle(x)
+                    pygame.mixer.music.load(x[1])
+                    pygame.mixer.music.set_volume(0.03)
+                    pygame.mixer.music.play(-1)
+                    init_battle()
+                else :
+                    pygame.mixer.music.load("sound//boss.ogg")
+                    pygame.mixer.music.set_volume(0.07)
+                    pygame.mixer.music.play(-1)   
+                    init_boss_battle()                   
                 init_message()
             elif tmr <= 4:
                 bx = (4-tmr)*220
                 by = 0
-                screen.blit(imgBtlBG, [bx, by])
+                if floor!=2:
+                    screen.blit(imgBtlBG, [bx, by])
+                else:
+
+                    screen.blit(imgBtlBG3, [bx, by])
                 draw_text(screen, "Encounter!", 350, 200, font, WHITE)
             elif tmr <= 16:
                 draw_battle(screen, fontS)
-                draw_text(screen, emy_name+" appear!", 300, 200, font, WHITE)
+                if floor!=2:
+                    draw_text(screen, emy_name+" appear!", 300, 200, font, WHITE)
             else:
                 idx = 11
                 tmr = 0
@@ -623,7 +636,7 @@ def main(): # メイン処理
                 if btl_cmd == 0:
                     idx = 12
                     tmr = 0
-                if btl_cmd == 1 and potion > 0:
+                if btl_cmd == 1 and Heal > 0:
                     idx = 20
                     tmr = 0
                 if btl_cmd == 2 and blazegem > 0:
@@ -635,18 +648,29 @@ def main(): # メイン処理
 
         elif idx == 12: # プレイヤーの攻撃
             draw_battle(screen, fontS)
+        
             if tmr == 1:
                 set_message("You attack!")
                 num = random.randint(6,8)
                 se[num].play()
                 dmg = pl_str + random.randint(0, 9)
+
             if 2 <= tmr and tmr <= 4:
                 screen.blit(imgEffect[0], [700-tmr*120, -100+tmr*120])
             if tmr == 5:
                 emy_blink = 5
                 set_message(str(dmg)+"pts of damage!")
+
             if tmr == 11:
                 emy_life = emy_life - dmg
+                if emy_lifemax/2>=emy_life and floor==2 and boss_count==0:
+                    set_message("Awaking")
+                    sleep(5)
+                    pygame.mixer.music.load("sound//bosshalf.ogg")
+                    pygame.mixer.music.set_volume(0.07)
+                    pygame.mixer.music.play(-1)
+                    
+                    boss_count+=1    
                 if emy_life <= 0:
                     emy_life = 0
                     idx = 16
@@ -657,6 +681,9 @@ def main(): # メイン処理
 
         elif idx == 13: # 敵のターン、敵の攻撃
             draw_battle(screen, fontS)
+            if boss_count==1 and boss_count2==0:
+                clock.tick(4)
+                boss_count2+=1
             if tmr == 1:
                 set_message("Enemy turn.")
             if tmr == 5:
@@ -664,7 +691,7 @@ def main(): # メイン処理
                 se[0].play()
                 emy_step = 30
             if tmr == 9:
-                dmg = emy_str + random.randint(0, 9)
+                dmg = emy_str + math.floor(emy_lifemax*(random.uniform(1.0,1.1)**floor)/8)
                 set_message(str(dmg)+"pts of damage!")
                 dmg_eff = 5
                 emy_step = 0
@@ -712,7 +739,7 @@ def main(): # メイン処理
                 idx = 22
                 preLv=currentLv
                 calculateLv()
-                print(str(emy_lifemax)+'elife')
+                (str(emy_lifemax)+'elife')
                 
                 if currentLv>preLv:
                     idx = 17
@@ -738,26 +765,26 @@ def main(): # メイン処理
             if tmr == 50:
                 idx = 22
 
-        elif idx == 20: # Potion
+        elif idx == 20: # Heal
             draw_battle(screen, fontS)
             if tmr == 1:
-                set_message("Potion!")
+                set_message("Heal!")
                 se[2].play()
             if tmr == 6:
                 pl_life = pl_lifemax
-                potion = potion - 1
+                Heal = Heal - 1
             if tmr == 11:
                 idx = 13
                 tmr = 0
 
-        elif idx == 21: # Blaze gem
+        elif idx == 21: # Spell
             draw_battle(screen, fontS)
             img_rz = pygame.transform.rotozoom(imgEffect[1], 30*tmr, (12-tmr)/8)
             X = 440-img_rz.get_width()/2
             Y = 360-img_rz.get_height()/2
             screen.blit(img_rz, [X, Y])
             if tmr == 1:
-                set_message("Blaze gem!")
+                set_message("Spell!")
                 se[1].play()
             if tmr == 6:
                 blazegem = blazegem - 1
@@ -770,12 +797,12 @@ def main(): # メイン処理
             pygame.mixer.music.load("sound/maze1.ogg")
             pygame.mixer.music.play(-1)
             idx = 1
-            if floor==1:
+            if floor==2:
                 idx = 2
                 tmr = 0
 
 
-        draw_text(screen, "[S]peed "+str(speed), 740, 40, fontS, WHITE)
+        draw_text(screen, "Speed "+str(speed), 780, 680, fontS, WHITE2)
 
         pygame.display.update()
         clock.tick(4+2*speed)
