@@ -105,7 +105,7 @@ boss_count2=0
 COMMAND = ["Attack", "Heal", "Spell", "Escape"]
 TRE_NAME = ["Heal", "Spell", "Food spoiled.", "Food +20", "Food +100"]
 EMY_NAME = [
-    "Green slime", "Red slime", "Axe beast", "Ogre", "Sword man",
+    "Red chimera", "thr bird", "Axe horse", "Ogre", "Sword man",
     "Death hornet", "Signal slime", "Devil plant", "Twin killer", "Hell","A","B"
     ]
 BOSS_EMY_NAME =["king fish"]
